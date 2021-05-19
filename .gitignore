@@ -1,2 +1,6 @@
 # ignore references folder
 papers
+
+# ignore results
+results*
+*.html
