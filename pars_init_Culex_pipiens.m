@@ -1,4 +1,4 @@
-function [par, metaPar, txtPar] = pars_init_Aedes_aegypti(metaData)
+function [par, metaPar, txtPar] = pars_init_Culex_pipiens(metaData)
 
 metaPar.model = 'hex'; 
 

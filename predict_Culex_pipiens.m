@@ -1,4 +1,4 @@
-function [prdData, info] = predict_Aedes_aegypti(par, data, auxData)
+function [prdData, info] = predict_Culex_pipiens(par, data, auxData)
   
   % unpack par, data, auxData
   cPar = parscomp_st(par); vars_pull(par); 
