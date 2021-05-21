@@ -6,7 +6,8 @@ function [prdData, info] = predict_Culex_pipiens(par, data, auxData)
   
   % compute temperature correction factors
   TC = tempcorr(temp.ab, T_ref, T_A);     % most data at 28 C
-  TC_WJO = tempcorr(temp.WJO, T_ref, T_A);
+  TC_TL = tempcorr(C2K(TtI1(:,1)), T_ref, T_A);
+  % TC_WJO = tempcorr(temp.WJO, T_ref, T_A);
   
   % zero-variate data
 
@@ -58,10 +59,14 @@ function [prdData, info] = predict_Culex_pipiens(par, data, auxData)
   Ww_e = 1e3 * (L_e^3 + E_e * w_E/ mu_E/ d_E);   % mg, wet weight at emergence
   
   % instar age, length
-  Lw_1 = Lw_b; Lw_2 = Lw_1 * s_1^0.5; Lw_3 = Lw_2 * s_2^0.5; Lw_4 = Lw_3 * s_3^0.5; % mm, head length of instar 1-4
-  rT_j = TC * g * k_M * (f/ l_b - 1)/ (f + g); rT_4 = TC * g * k_M * (f_4/ l_b - 1)/ (f_4 + g); % 1/d, specific growth rate
-  tT_1 = log(Lw_2/ Lw_1) * 3/ rT_j;  tT_2 = log(Lw_3/ Lw_2) * 3/ rT_j;
-  tT_3 = log(Lw_4/ Lw_3) * 3/ rT_j;  tT_4 = log(Lw_j/ Lw_4) * 3/ rT_4;
+  Lw_1 = Lw_b; Lw_2 = Lw_1 * s_1^0.5; 
+  Lw_3 = Lw_2 * s_2^0.5; Lw_4 = Lw_3 * s_3^0.5; % mm, head length of instar 1-4
+  rT_j = TC * g * k_M * (f/ l_b - 1)/ (f + g); 
+  rT_4 = TC * g * k_M * (f_4/ l_b - 1)/ (f_4 + g); % 1/d, specific growth rate
+  tT_1 = log(Lw_2/ Lw_1) * 3/ rT_j; 
+  tT_2 = log(Lw_3/ Lw_2) * 3/ rT_j;
+  tT_3 = log(Lw_4/ Lw_3) * 3/ rT_j;
+  tT_4 = log(Lw_j/ Lw_4) * 3/ rT_4;
 
   % reproduction (no kappa-rule)
   RT_i = 1e3 * kap_R * TC * (p_Am * s_M * L_e^2 - p_M * L_e^3 - k_J * E_He)/ E_0; % #/d, ultimate reproduction rate at T
@@ -70,12 +75,50 @@ function [prdData, info] = predict_Culex_pipiens(par, data, auxData)
   pars_tm = [g; l_T; h_a/ k_M^2; s_G];  % compose parameter vector at T_ref
   t_m = get_tm_s(pars_tm, f, l_b);      % -, scaled mean life span at T_ref
   aT_m = t_m/ k_M/ TC;                  % d, mean life span at T
+
+  % temperature - development time instar 1
+  rT_j = g * k_M * (f/ l_b - 1)/ (f + g);  % 1/d, specific growth rate
+  tT_1 = log(Lw_2/ Lw_1) * 3/ rT_j; 
+  ET_tI_1 = tT_1 ./ TC_TL;    
+
+  % temperature - development time instar 2
+  rT_j = g * k_M * (f/ l_b - 1)/ (f + g);  % 1/d, specific growth rate
+  tT_2 = log(Lw_3/ Lw_2) * 3/ rT_j; 
+  ET_tI_2 = tT_1 ./ TC_TL;    
+  
+  % temperature - development time instar 3
+  rT_j = g * k_M * (f/ l_b - 1)/ (f + g);  % 1/d, specific growth rate
+  tT_1 = log(Lw_4/ Lw_3) * 3/ rT_j; 
+  ET_tI_3 = tT_1 ./ TC_TL;    
+  
+  % temperature - development time instar 4
+  rT_j = g * k_M * (f/ l_b - 1)/ (f + g);  % 1/d, specific growth rate
+  tT_1 = log(Lw_j/ Lw_4) * 3/ rT_j; 
+  ET_tI_4 = tT_1 ./ TC_TL;    
+  
+  % % temperature - development time pupa
+  % rT_j = g * k_M * (f/ l_b - 1)/ (f + g);  % 1/d, specific growth rate
+  % tT_1 = log(Lw_2/ Lw_1) * 3/ rT_j; 
+  % ET_t_p = tT_1 ./ TC_TL;    
+  
+  % % temperature - development time larva to adult
+  % rT_j = g * k_M * (f/ l_b - 1)/ (f + g);  % 1/d, specific growth rate
+  % tT_1 = log(Lw_2/ Lw_1) * 3/ rT_j; 
+  % ET_t_e = tT_1 ./ TC_TL;    
+  
+
   
   % pack to output
   prdData.ab = aT_b;
   prdData.tj = tT_j;
   prdData.te = tT_e;
   prdData.am = aT_m;
+  prdData.TtI1  = ET_tI_1; 
+  prdData.TtI2  = ET_tI_2; 
+  prdData.TtI3  = ET_tI_3; 
+  prdData.TtI4  = ET_tI_4; 
+  % prdData.TtP  = ET_t_p;
+  % prdData.Tte  = ET_t_e; 
   prdData.t1 = tT_1;
   prdData.t2 = tT_2;
   prdData.t3 = tT_3;
@@ -95,51 +138,51 @@ function [prdData, info] = predict_Culex_pipiens(par, data, auxData)
   % time-weight 
   L_3 = L_b * prod([s_1 s_2 s_3].^0.5); % cm, structural length at instar 4
   ELE_0 = [f * E_m * L_b^3; L_b; 0];    % initial state vector
-  [t ELE] = ode45(@dget_ELE, tW(:,1), ELE_0, [], f_tW, TC * k_M, TC * v/ L_b, TC * p_J, TC * p_Am/ L_b, E_m, g, kap, L_3, f_4);
-  EWw = 1e3 * (ELE(:,2).^3 + sum(ELE(:,[1 3]), 2)/ mu_E * w_E/ d_E); % mg, wet weight
+  %[t ELE] = ode45(@dget_ELE, tW(:,1), ELE_0, [], f_tW, TC * k_M, TC * v/ L_b, TC * p_J, TC * p_Am/ L_b, E_m, g, kap, L_3, f_4);
+  %EWw = 1e3 * (ELE(:,2).^3 + sum(ELE(:,[1 3]), 2)/ mu_E * w_E/ d_E); % mg, wet weight
   
   % WJO-data
   % larva
-  [W ELE] = ode45(@dget_ELE_W, [Ww_b; WJO(1:3,1)], ELE_0, [], f, k_M, v/ L_b, p_J, p_Am/L_b, E_m, g, kap, L_3, f_4, w_E, mu_E, d_V);
-  ELE(1,:) = []; L = ELE(:,2); V = L.^3;  E = ELE(:,1); e = E ./ V/ E_m;  % -, scaled reserve density
-  r = g * k_M * (e/ l_b - 1) ./ (e + g); % 1/d, specific growth rate
-  pA = f * p_Am/ L_b * V; pD = p_J + p_M * V; %pA = 0 * pA;
-  p_C = E .* (v/ L_b - r); pG = kap * p_C - p_M * V;  
-  pADG = [pA, pD, pG]; % scaled growth (page 78 DEB book)
-  JM = - (n_M\n_O) * eta_O * pADG'; % mol/d, mineral fluxes
-  JO = - JM(3,:)'/ 24;       % mol O2/h, O2-consumption 
-  EJO_l = TC_WJO(1:3) .* JO * 24.4e6 ./ WJO(1:3,1); % mm^3/g/h, specific O2 consumption 
+  % [W ELE] = ode45(@dget_ELE_W, [Ww_b; WJO(1:3,1)], ELE_0, [], f, k_M, v/ L_b, p_J, p_Am/L_b, E_m, g, kap, L_3, f_4, w_E, mu_E, d_V);
+  % ELE(1,:) = []; L = ELE(:,2); V = L.^3;  E = ELE(:,1); e = E ./ V/ E_m;  % -, scaled reserve density
+  % r = g * k_M * (e/ l_b - 1) ./ (e + g); % 1/d, specific growth rate
+  % pA = f * p_Am/ L_b * V; pD = p_J + p_M * V; %pA = 0 * pA;
+  % p_C = E .* (v/ L_b - r); pG = kap * p_C - p_M * V;  
+  % pADG = [pA, pD, pG]; % scaled growth (page 78 DEB book)
+  % JM = - (n_M\n_O) * eta_O * pADG'; % mol/d, mineral fluxes
+  % JO = - JM(3,:)'/ 24;       % mol O2/h, O2-consumption 
+  % EJO_l = TC_WJO(1:3) .* JO * 24.4e6 ./ WJO(1:3,1); % mm^3/g/h, specific O2 consumption 
   % pupa
-  v_j = v * s_M;    % cm/d, energy conductance of imago
-  L_mj = L_m * L_j/ L_b; % cm, max length of imago
-  HVEL_0 = [0; L_j^3; E_j; 1e-4];
-  [W HVEL] = ode45(@dget_HVEL_W, [Wwj; WJO(4:5,1)], HVEL_0, [], k_J, v/ L_b, v_j, E_m, L_mj, kap, g, mu_E, kap_V, w_E, d_E);
-  HVEL(1,:) = [];
-  H = HVEL(:,1); V_l = HVEL(:,2); E = HVEL(:,3); L = HVEL(:,4); V = L.^3;  e = E ./ V/ E_m;  % -, scaled reserve density
-  r = v_j * (e ./ L - 1/ L_m) ./ (e + g); % 1/d, specific growth rate
-  pA = [0; 0]; p_C = E .* (v_j ./ L - r); % J/d, mobilisation rate
-  pD = (1 - kap) * p_C + p_M * V;  % J/d, dissipation rate
-  pG = kap * p_C - p_M * V;  % J/d, change in structure
-  pADG = [pA, pD, pG]; % scaled growth (page 78 DEB book)
-  JM = - (n_M\n_O) * eta_O * pADG'; % mol/d, mineral fluxes
-  JO = - JM(3,:)'/ 24;       % mol O2/h, O2-consumption 
-  EJO_p = TC_WJO(4:5) .* JO * 24.4e6 ./ WJO(4:5,1); % mm^3/g/h, specific O2 consumption 
+  % v_j = v * s_M;    % cm/d, energy conductance of imago
+  % L_mj = L_m * L_j/ L_b; % cm, max length of imago
+  % HVEL_0 = [0; L_j^3; E_j; 1e-4];
+  % [W HVEL] = ode45(@dget_HVEL_W, [Wwj; WJO(4:5,1)], HVEL_0, [], k_J, v/ L_b, v_j, E_m, L_mj, kap, g, mu_E, kap_V, w_E, d_E);
+  % HVEL(1,:) = [];
+  % H = HVEL(:,1); V_l = HVEL(:,2); E = HVEL(:,3); L = HVEL(:,4); V = L.^3;  e = E ./ V/ E_m;  % -, scaled reserve density
+  % r = v_j * (e ./ L - 1/ L_m) ./ (e + g); % 1/d, specific growth rate
+  % pA = [0; 0]; p_C = E .* (v_j ./ L - r); % J/d, mobilisation rate
+  % pD = (1 - kap) * p_C + p_M * V;  % J/d, dissipation rate
+  % pG = kap * p_C - p_M * V;  % J/d, change in structure
+  % pADG = [pA, pD, pG]; % scaled growth (page 78 DEB book)
+  % JM = - (n_M\n_O) * eta_O * pADG'; % mol/d, mineral fluxes
+  % JO = - JM(3,:)'/ 24;       % mol O2/h, O2-consumption 
+  % EJO_p = TC_WJO(4:5) .* JO * 24.4e6 ./ WJO(4:5,1); % mm^3/g/h, specific O2 consumption 
   % imago
-  E = (WJO(6:7,1) - L_e^3) * mu_E/ w_E; % J, reserve
-  e = E ./ L_e^3/ E_m;  % -, scaled reserve density
-  pA = f * p_Am * s_M * L_e^2 * ones(2,1); pA = 0 * pA;
-  p_C = E .* v_j/ L_e ;          % J/d, mobilisation rate
-  pD = k_J * E_He + p_M * L_e^3 + ((1 - kap) * p_C - k_J * E_He) * (1 - kap_R);  % J/d, dissipation rate
-  pG = 0 * pA;  % J/d, change in structure
-  pADG = [pA, pD, pG]; % scaled growth (page 78 DEB book)
-  JM = - (n_M\n_O) * eta_O * pADG'; % mol/d, mineral fluxes
-  JO = - JM(3,:)'/ 24;       % mol O2/h, O2-consumption 
-  EJO_e = TC_WJO(6:7) .* JO * 24.4e6 ./ WJO(6:7,1); % mm^3/g/h, specific O2 consumption 
-  EJT_O = [EJO_l; EJO_p; EJO_e];
+  % E = (WJO(6:7,1) - L_e^3) * mu_E/ w_E; % J, reserve
+  % e = E ./ L_e^3/ E_m;  % -, scaled reserve density
+  % pA = f * p_Am * s_M * L_e^2 * ones(2,1); pA = 0 * pA;
+  % p_C = E .* v_j/ L_e ;          % J/d, mobilisation rate
+  % pD = k_J * E_He + p_M * L_e^3 + ((1 - kap) * p_C - k_J * E_He) * (1 - kap_R);  % J/d, dissipation rate
+  % pG = 0 * pA;  % J/d, change in structure
+  % pADG = [pA, pD, pG]; % scaled growth (page 78 DEB book)
+  % JM = - (n_M\n_O) * eta_O * pADG'; % mol/d, mineral fluxes
+  % JO = - JM(3,:)'/ 24;       % mol O2/h, O2-consumption 
+  % EJO_e = TC_WJO(6:7) .* JO * 24.4e6 ./ WJO(6:7,1); % mm^3/g/h, specific O2 consumption 
+  % EJT_O = [EJO_l; EJO_p; EJO_e];
 
   % pack to output
-  prdData.tW = EWw;
-  prdData.WJO = EJT_O;
+  % prdData.tW = EWw;
+  % prdData.WJO = EJT_O;
   
 end
 
