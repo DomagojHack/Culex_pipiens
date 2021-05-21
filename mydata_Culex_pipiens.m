@@ -1,6 +1,6 @@
 function [data, auxData, metaData, txtData, weights] = mydata_Culex_pipiens
 
-% File based on existing Aedes aegypti pet in AmP
+% File based on existing Aedes aegypti and Helicoverpa armigera pet in AmP 
 
 
 %% set metaData
